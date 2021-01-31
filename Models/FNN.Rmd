@@ -1,0 +1,182 @@
+---
+title: "IE6600-Project"
+author: "Tribhuwan Singh"
+date: "3/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(tidyverse)
+library(leaflet)
+library(leaflet.extras)
+library(DT)
+library(keras)
+library(RSNNS)
+library(tensorflow)
+```
+
+```{r}
+Zip_Code_Results <- read_excel("Jones-Kammen-2014-Zip-City-County-Results.xlsx", 
+    sheet = "zip code results", col_types = c("numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "text", "text", "text", 
+        "text", "skip", "skip", "skip", "skip", 
+        "text", "text", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric"))
+Zip_Code_Results <- na.omit(Zip_Code_Results)
+```
+
+
+
+```{r}
+set.seed(100)
+ffn_data1 <- as.matrix(data[, c(3,5,15,16,17,18,19,25)])
+ffn_data <- normalizeData(ffn_data1, type = "0_1")
+colnames(ffn_data) <- colnames(ffn_data1)
+```
+
+
+```{r}
+set.seed(10)
+ind <- sample(2, nrow(ffn_data), replace = TRUE, prob = c(0.7, 0.3))
+ffn.training <- ffn_data[ind == 1, 1:7]
+ffn.test <- ffn_data[ind == 2, 1:7]
+ffn.trainingtarget <- ffn_data[ind == 1, 8]
+ffn.testtarget <- ffn_data[ind == 2, 8]
+```
+
+
+
+```{r}
+model <- keras_model_sequential()
+
+model %>% layer_dense(units = 128,  input_shape = ncol(ffn.training), batch_size = 32) %>%
+  layer_batch_normalization() %>%
+  layer_dropout(rate = 0.2) %>%
+ layer_dense(units = 64) %>%
+  layer_batch_normalization() %>%
+  layer_dropout(rate = 0.2) %>%
+  layer_dense(units = 32) %>%
+  layer_batch_normalization() %>%
+  layer_dropout(rate = 0.2) %>%
+ layer_dense(units = 1)
+summary(model)
+```
+
+
+```{r}
+model %>% compile(loss = 'mse',
+                  optimizer = 'rmsprop',
+                  metrics = list("mean_absolute_error")
+                   )
+
+```
+
+
+```{r}
+history <- model %>% fit(
+  x = ffn.training,
+  y = ffn.trainingtarget,
+  epochs = 100,
+  validation_split = 0.2,
+  shuffle = FALSE
+)
+```
+
+```{r}
+train_scores = model %>% evaluate(ffn.training, ffn.trainingtarget, verbose = 0)
+print(train_scores)
+```
+
+
+```{r}
+test_scores = model %>% evaluate(ffn.test, ffn.testtarget, verbose = 0)
+print(test_scores)
+```
+
+
+```{r}
+y_pred = model %>% predict(ffn.training)
+x_axes = seq(1:length(y_pred))
+plot(x_axes, ffn.trainingtarget, type="l", col="red", lwd=2)
+lines(x_axes, y_pred, col="blue",lwd=2)
+legend("topleft", legend=c("Trained-original", "Trained-predicted"),
+        col=c("red", "blue"), lty=1,cex=0.8) 
+```
+
+
+```{r}
+y_pred <- as.numeric(y_pred)
+ffn.training1 <- as.data.frame(ffn.training)
+ffn.training1$Pred <- y_pred
+```
+
+
+```{r}
+y_pred = model %>% predict(ffn.test)
+x_axes = seq(1:length(y_pred))
+plot(x_axes, ffn.testtarget, type="l", col="red", lwd=2)
+lines(x_axes, y_pred, col="blue",lwd=2)
+legend("topleft", legend=c("Test-original", "Test-predicted"),
+        col=c("red", "blue"), lty=1,cex=0.8) 
+```
+
+```{r}
+y_pred <- as.numeric(y_pred)
+ffn.test1 <- as.data.frame(ffn.test)
+ffn.test1$Pred <- y_pred
+```
+
+
+```{r}
+plot(history)
+```
+
+
+```{r}
+pred_data <- rbind(ffn.training1, ffn.test1)
+pred_data <- denormalizeData(pred_data, getNormParameters(ffn_data))
+colnames(pred_data) <- colnames(ffn_data1)
+
+pred_data <- as.data.frame(pred_data)
+Zip_Code_Results <- as.data.frame(Zip_Code_Results)
+
+new_dataset <- pred_data %>% merge(Zip_Code_Results, by = names(pred_data)[1:7], sort = FALSE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

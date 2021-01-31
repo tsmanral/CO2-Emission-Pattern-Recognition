@@ -1,0 +1,185 @@
+---
+title: "IE6600-Project"
+author: "Tribhuwan Singh"
+date: "3/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(tidyverse)
+library(leaflet)
+library(leaflet.extras)
+library(DT)
+library(keras)
+library(RSNNS)
+library(tensorflow)
+library(dplyr)
+```
+
+```{r}
+Zip_Code_Results <- read_excel("Jones-Kammen-2014-Zip-City-County-Results.xlsx", 
+    sheet = "zip code results", col_types = c("numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "text", "text", "text", 
+        "text", "skip", "skip", "skip", "skip", 
+        "text", "text", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric"))
+Zip_Code_Results <- na.omit(Zip_Code_Results)
+```
+
+
+
+```{r}
+reshapeDt <- function(data){ # data is the original train matrix (training dataset)
+    rows <- nrow(data)
+    cols <- ncol(data)
+    
+    dt <- array(dim=c(rows, 1, cols))
+    for(i in 1:rows){
+        dt[i,1,] <- data[i,1:cols]
+    }
+    dt
+}
+```
+
+
+```{r}
+set.seed(100)
+rnn_data1 <- as.matrix(Zip_Code_Results[, c(3,5,15,16,17,18,19,25)])
+rnn_data <- normalizeData(rnn_data1, type = "0_1")
+colnames(rnn_data) <- colnames(rnn_data1)
+
+```
+
+```{r}
+set.seed(10)
+sample <- sample(2, nrow(rnn_data), replace = TRUE, prob = c(0.7, 0.3))
+rnn.training <- rnn_data[sample == 1, 1:7]
+rnn.test <- rnn_data[sample == 2, 1:7]
+rnn.trainingtarget <- rnn_data[sample == 1, 8]
+rnn.testtarget <- rnn_data[sample == 2, 8]
+```
+
+
+```{r}
+model <- keras_model_sequential()
+
+model %>% layer_simple_rnn(units = 128,  input_shape = c(1,7), batch_size = 32, return_sequences = TRUE) %>%
+ layer_simple_rnn(units = 64, return_sequences = FALSE) %>%
+  layer_dense(units = 32) %>%
+ layer_dense(units = 1)
+summary(model)
+```
+
+
+```{r}
+model %>% compile(
+    optimizer = "rmsprop",
+    loss = "mse",
+    metrics = c("mae")
+  )
+
+```
+
+
+```{r}
+history <- model %>% fit(
+  x = reshapeDt(rnn.training),
+ y = rnn.trainingtarget,
+ epochs = 100,
+ validation_split = 0.2,
+ shuffle = FALSE
+)
+```
+
+```{r}
+train_scores = model %>% evaluate(reshapeDt(rnn.training), rnn.trainingtarget, verbose = 0)
+print(train_scores)
+```
+
+
+```{r}
+test_scores = model %>% evaluate(reshapeDt(rnn.test), rnn.testtarget, verbose = 0)
+print(test_scores)
+```
+
+
+```{r}
+y_pred = model %>% predict(reshapeDt(rnn.training))
+x_axes = seq(1:length(y_pred))
+plot(x_axes, rnn.trainingtarget, type="l", col="red", lwd=2)
+lines(x_axes, y_pred, col="blue",lwd=2)
+legend("topleft", legend=c("Train-original", "Train-predicted"),
+        col=c("red", "blue"), lty=1,cex=0.8) 
+```
+
+
+```{r}
+y_pred <- as.numeric(y_pred)
+rnn.training1 <- as.data.frame(rnn.training)
+rnn.training1$Pred <- y_pred
+```
+
+
+```{r}
+y_pred = model %>% predict(reshapeDt(rnn.test))
+x_axes = seq(1:length(y_pred))
+plot(x_axes, rnn.testtarget, type="l", col="red", lwd=2)
+lines(x_axes, y_pred, col="blue",lwd=2)
+legend("topleft", legend=c("Test-original", "Test-predicted"),
+        col=c("red", "blue"), lty=1,cex=0.8) 
+```
+
+```{r}
+y_pred <- as.numeric(y_pred)
+rnn.test1 <- as.data.frame(rnn.test)
+rnn.test1$Pred <- y_pred
+```
+
+
+```{r}
+plot(history)
+```
+
+
+```{r}
+pred_data <- rbind(rnn.training1, rnn.test1)
+pred_data <- denormalizeData(pred_data, getNormParameters(rnn_data))
+colnames(pred_data) <- colnames(rnn_data1)
+
+pred_data <- as.data.frame(pred_data)
+Zip_Code_Results <- as.data.frame(Zip_Code_Results)
+
+new_dataset <- pred_data %>% merge(Zip_Code_Results, by= names(pred_data)[1:7], sort = FALSE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
