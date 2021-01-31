@@ -8,9 +8,9 @@
 </p>
 
 
+Climatic changes and global warming is a defining issue at this time. With these emerging problems, many cities are moving towards a cleaner goal - carbon neutrality. 
 
-
-The project involves two main components we considered necessary for this study. The first part of this study revolves around doing interactive analysis and inferring properties of the world from carbon emission data. However, the second part of this study focuses more on applying unsupervised learning concepts to those aspects in order to get some insightful
+The project involves two main components we considered necessary for this study. The first part of this study revolves around doing interactive analysis and inferring properties of the world from carbon emission data. However, the second part of this study focuses more on applying Deep learning concepts to those aspects in order to get some insightful
 information and patterns.
 A defining part of our data is to use feature engineering to better represent the underlying problem. The purpose of this step is to develop a foundation and explore features for
 Interactive Data Visualization. This includes tidying data, creating function/algorithms, and data processing using R libraries.
@@ -25,7 +25,7 @@ The project applies deep learning methodologies.
 In total, three different models are created: Feedforward Neural Network , Simple Recurrent Neural Network, and LSTM Recurrent Neural Network. The performance accuracies of the training and test sets are compared for all six models. The models are built using open-source deep learning frameworks namely, Tensorflow and Keras.
 
 
-Simple Recurrent Neural Networks outperform the other two networks. Moreover, the final Simple RNN model has significantly lower MSE scores compared to LSTM model and Feed Forward model.
+Recurrent Neural Networks outperforms the Feedforward Neural network. Moreover, the final Simple RNN model has significantly lower MSE scores compared to LSTM model and Feed Forward model.
 
 ### Dataset Details
 The data we used comes from two different publications made available by PANGAEA and ACS Publications. In particular dataset contains the following data:
