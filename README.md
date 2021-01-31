@@ -52,4 +52,4 @@ Metrics for models trained:
 
 All accuracy and Loss graphs can be found in the **Accuracy_and_Loss_graphs** folder.
 
-**Note:** This project was created as my Spring 2020 project during my MS degree at Northeastern University. The Demo Shiny App can be found at this link: ([@ShinyApp](https://charita-madduri.shinyapps.io/myapp/)).
+**Note:** This project was created as my Spring 2020 project during my MS degree at Northeastern University. The Demo Shiny App can be found here: [ShinyApp](https://charita-madduri.shinyapps.io/myapp/).
